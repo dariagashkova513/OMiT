@@ -1,0 +1,22 @@
+yolov8n-seg-ort:
+  path: /mnt/c/models/yolov8segn_ortp.onnx
+  family: yolo_seg
+  input_size: [640, 640]
+
+yolov8l-seg-angl:
+  path: /mnt/c/models/yolov8segl_angl.onnx
+  family: yolo_seg
+  input_size: [640, 640]
+
+maskrcnn:
+  path: /mnt/c/models/maskrcnn_opset16.onnx
+  family: maskrcnn
+
+sam-vit-b:
+  path: /mnt/c/models/sam_final_encoder.onnx
+  decoder_path: /mnt/c/models/sam_final_decoder.onnx
+  family: sam
+  options:
+    points_per_side: 16
+    pred_iou_thres: 0.75
+    min_mask_area: 20

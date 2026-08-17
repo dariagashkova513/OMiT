@@ -1,0 +1,36 @@
+# Copy this file to dataset_registry.yaml and replace the paths with your data.
+bricks-coco:
+  format: coco
+  images: /mnt/c/bricks-3-coco/test
+  annotations: /mnt/c/bricks-3-coco/test/_annotations.coco.json
+
+fokus-bilder-yolo:
+  format: yolo_seg
+  images: /mnt/c/onnx_model_test_suite/tiles_set
+  labels: /mnt/c/onnx_model_test_suite/tiles_set/labels
+  class_names: [brick]
+  image_ext: .png
+
+bricks-yolo:
+  format: yolo_seg
+  images: /mnt/c/bricks-3-yolo/test/images
+  labels: /mnt/c/bricks-3-yolo/test/labels
+  class_names: [brick]
+  image_ext: .jpg
+
+fokus-bilder-coco:
+  format: coco
+  images: /mnt/c/onnx_model_test_suite/tiles_set
+  annotations: /mnt/c/onnx_model_test_suite/tiles_set/result.json
+
+bricks-rotated-15-coco:
+  format: coco
+  images: /mnt/c/bachelors/dataset_rotated15_coco/test 
+  annotations: /mnt/c/bachelors/dataset_rotated15_coco/test/annotations.coco
+
+bricks-rotated-15-yolo:
+  format: yolo_seg
+  images: /mnt/c/bachelors/dataset_rotated15_yolo/test/images
+  annotations: /mnt/c/bachelors/dataset_rotated15_coco/test/labels
+
+  

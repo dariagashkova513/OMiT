@@ -1,0 +1,153 @@
+@startuml ONNX_Model_Evaluation_Suite
+title ONNX Model Evaluation Suite - Class and Module Diagram
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam shadowing false
+hide empty members
+
+package "seg_eval" #EAF2F8 {
+  class GTInstance <<dataclass>> {
+    +bbox: tuple[float, float, float, float]
+    +class_id: int
+    +mask: ndarray | None
+  }
+
+  class GTSample <<dataclass>> {
+    +image_id: int
+    +image_path: str
+    +width: int
+    +height: int
+    +instances: list[GTInstance]
+  }
+
+  class GTDataset <<dataclass>> {
+    +samples: list[GTSample]
+    +class_names: list[str]
+    +__len__(): int
+  }
+
+  class Prediction <<dataclass>> {
+    +bbox: tuple[float, float, float, float]
+    +class_id: int
+    +score: float
+    +mask: ndarray | None
+  }
+
+  class "annotations" as annotations <<module>> {
+    +load_coco_gt(json_path, images_dir, decode_masks=False): GTDataset
+    +load_yolo_gt(labels_dir, images_dir, class_names, image_ext, is_seg): GTDataset
+    +load_dataset(config): GTDataset
+    -_decode_coco_segmentation(segmentation, height, width): ndarray
+  }
+
+  class "metrics" as metrics <<module>> {
+    +box_iou(a, b): float
+    +match_predictions(gt_instances, predictions, iou_thres): tuple
+    +precision_recall(tp, fp, fn): tuple
+    +dataset_precision_recall(gt_samples, predictions_by_image, iou_thres): dict
+    +per_class_precision_recall(gt_samples, predictions_by_image, class_names, iou_thres): dict
+    +mask_iou(a, b): float
+    +dice_coefficient(a, b): float
+    +dataset_mask_metrics(gt_samples, predictions_by_image, iou_thres): dict
+    +compute_coco_map(gt_samples, predictions_by_image, iou_type, max_detections): dict
+  }
+}
+
+package "tests (runner and adapters)" #FDF2E9 {
+  class SegmentationInstance <<dataclass>> {
+    +mask: ndarray
+    +bbox: tuple[float, float, float, float]
+    +score: float
+    +class_id: int | None
+    +id: int = -1
+    +to_dict(): dict
+  }
+
+  class SegmentationResult <<dataclass>> {
+    +instances: list[SegmentationInstance]
+    +image_shape: tuple[int, int]
+    +model_name: str = "unknown"
+    +__len__(): int
+    +to_dict(): dict
+  }
+
+  class "common" as common <<module>> {
+    +letterbox(image, new_shape, color): tuple
+    +unletterbox_boxes(boxes, params): ndarray
+    +crop_proto_mask_to_box(mask, box, params, input_size): ndarray
+    +paste_mask_in_image(mask, box, image_shape, threshold): ndarray
+  }
+
+  class "adapters.yolo_seg" as yolo <<module>> {
+    +run_yolo_seg(session, image_bgr, ...): SegmentationResult
+  }
+
+  class "adapters.maskrcnn" as maskrcnn <<module>> {
+    +run_maskrcnn(session, image_bgr, ...): SegmentationResult
+  }
+
+  class "adapters.sam" as sam <<module>> {
+    +run_sam(session, image_bgr, ...): SegmentationResult
+    -_encoder_blob(image_bgr, input_size): tuple
+    -_bbox_from_mask(mask): tuple | None
+    -_nms(instances, threshold): list
+  }
+
+  class "main" as runner <<module>> {
+    +load_registries(paths): dict
+    +load_dataset_registries(paths): dict
+    +create_model_runner(name, models, providers): Callable
+    +run_model(name, image_bgr, models, providers): SegmentationResult
+    +evaluate_dataset(model_name, models, dataset_config, metrics): dict
+    +parse_args(argv): Namespace
+    +main(argv): void
+  }
+}
+
+package "scripts" #F4ECF7 {
+  class "strip_yolo_confidence" as strip_script <<module>> {
+    +stripped_content(path): tuple[str, int]
+    +main(argv): void
+  }
+}
+
+GTDataset "1" *-- "0..*" GTSample : samples
+GTSample "1" *-- "0..*" GTInstance : instances
+SegmentationResult "1" *-- "0..*" SegmentationInstance : instances
+
+annotations ..> GTDataset : creates
+annotations ..> GTSample : creates
+annotations ..> GTInstance : creates
+metrics ..> GTSample : evaluates
+metrics ..> GTInstance : matches
+metrics ..> Prediction : consumes
+
+yolo ..> common : preprocesses / masks
+maskrcnn ..> common : creates results
+sam ..> common : creates results
+yolo ..> SegmentationResult : returns
+maskrcnn ..> SegmentationResult : returns
+sam ..> SegmentationResult : returns
+
+runner ..> annotations : loads datasets
+runner ..> metrics : computes metrics
+runner ..> yolo : dispatches
+runner ..> maskrcnn : dispatches
+runner ..> sam : dispatches
+runner ..> Prediction : converts inference output
+
+note right of runner
+  FAMILY_RUNNERS maps model families to adapters.
+  ONNX Runtime sessions are created here and reused
+  throughout dataset evaluation.
+end note
+
+legend bottom
+  |= Relationship |= Meaning |
+  | *-- | Composition / ownership |
+  | ..> | Uses, creates, or calls |
+endlegend
+
+@enduml
