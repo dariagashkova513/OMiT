@@ -1,3 +1,5 @@
 /.venv
 /.agents
 /results
+/.ipynb_checkpoints
+/data
