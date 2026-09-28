@@ -16,6 +16,7 @@ from seg_eval.metrics import (
     Prediction, compute_coco_map, dataset_mask_metrics, dataset_precision_recall,
     per_class_precision_recall,
 )
+from seg_eval.visualization import save_result_image
 
 FAMILY_RUNNERS = {"yolo_seg": run_yolo_seg, "maskrcnn": run_maskrcnn, "sam": run_sam}
 DEFAULT_REGISTRY = Path(__file__).resolve().parents[1] / "model_registry.yaml"
@@ -102,7 +103,8 @@ def run_model(name, image_bgr, models, providers=None, runtime_options=None):
     return create_model_runner(name, models, providers, runtime_options)(image_bgr)
 
 
-def evaluate_dataset(model_name, models, dataset_config, metrics, runtime_options=None):
+def evaluate_dataset(model_name, models, dataset_config, metrics, runtime_options=None,
+                     visualization_dir=None, visualization_limit=2):
     dataset_config = dict(dataset_config)
     if "mask" in metrics and dataset_config["format"].lower() == "coco":
         dataset_config["decode_masks"] = True
@@ -122,6 +124,9 @@ def evaluate_dataset(model_name, models, dataset_config, metrics, runtime_option
             Prediction(tuple(instance.bbox), instance.class_id, instance.score, instance.mask)
             for instance in result.instances
         ]
+        if visualization_dir is not None and index <= visualization_limit:
+            output_path = Path(visualization_dir) / f"{Path(sample.image_path).stem}-predictions.jpg"
+            save_result_image(output_path, image, result, ground_truth.class_names)
         print(f"[{index}/{len(ground_truth)}] {Path(sample.image_path).name}", flush=True)
     report = {
         "model": model_name,
@@ -164,6 +169,14 @@ def parse_args(argv=None):
     parser.add_argument("--metric", action="append", choices=("precision_recall", "map", "mask"),
                         help="dataset metric; repeat to select several (default: precision_recall)")
     parser.add_argument("--output", type=Path, help="optional JSON result path")
+    parser.add_argument(
+        "--visualize", type=Path,
+        help="save an annotated image (single image) or annotated samples (dataset directory)",
+    )
+    parser.add_argument(
+        "--visualize-limit", type=int, default=2,
+        help="number of dataset samples to visualize (default: 2)",
+    )
     sam = parser.add_argument_group("SAM options")
     sam.add_argument(
         "--sam-point", action="append", nargs=2, type=float, metavar=("X", "Y"),
@@ -201,6 +214,8 @@ def sam_runtime_options(args, family):
 
 def main(argv=None):
     args = parse_args(argv)
+    if args.visualize_limit < 1:
+        raise SystemExit("--visualize-limit must be at least 1")
     models = load_registries(args.registry or [DEFAULT_REGISTRY])
     if args.model not in models:
         raise SystemExit(f"unknown model {args.model!r}; choose from: {', '.join(sorted(models))}")
@@ -214,12 +229,16 @@ def main(argv=None):
         report = evaluate_dataset(
             args.model, models, datasets[args.dataset],
             args.metric or ["precision_recall"], runtime_options,
+            args.visualize, args.visualize_limit,
         )
     else:
         image = cv2.imread(str(args.image))
         if image is None:
             raise SystemExit(f"could not read image: {args.image}")
-        report = run_model(args.model, image, models, runtime_options=runtime_options).to_dict()
+        result = run_model(args.model, image, models, runtime_options=runtime_options)
+        if args.visualize:
+            save_result_image(args.visualize, image, result)
+        report = result.to_dict()
     output = json.dumps(report, indent=2)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)

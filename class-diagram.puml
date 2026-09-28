@@ -37,7 +37,7 @@ package "seg_eval" #EAF2F8 {
 
   class "annotations" as annotations <<module>> {
     +load_coco_gt(json_path, images_dir, decode_masks=False): GTDataset
-    +load_yolo_gt(labels_dir, images_dir, class_names, image_ext, is_seg): GTDataset
+    +load_yolo_gt(labels_dir, images_dir, class_names, image_ext=".jpg", is_seg=False): GTDataset
     +load_dataset(config): GTDataset
     -_decode_coco_segmentation(segmentation, height, width): ndarray
   }
@@ -52,6 +52,15 @@ package "seg_eval" #EAF2F8 {
     +dice_coefficient(a, b): float
     +dataset_mask_metrics(gt_samples, predictions_by_image, iou_thres): dict
     +compute_coco_map(gt_samples, predictions_by_image, iou_type, max_detections): dict
+    -_encode_mask(mask, mask_utils): dict
+  }
+
+  class "visualization" as visualization <<module>> {
+    +class_color(class_id): tuple[int, int, int]
+    +draw_predictions(image_bgr, instances, class_names, mask_alpha, draw_masks, draw_boxes, draw_labels): ndarray
+    +draw_result(image_bgr, result, class_names, **kwargs): ndarray
+    +save_result_image(output_path, image_bgr, result, class_names, **kwargs): Path
+    -_label(instance, class_names): str
   }
 }
 
@@ -89,19 +98,24 @@ package "tests (runner and adapters)" #FDF2E9 {
   }
 
   class "adapters.sam" as sam <<module>> {
-    +run_sam(session, image_bgr, ...): SegmentationResult
-    -_encoder_blob(image_bgr, input_size): tuple
+    +run_sam(encoder_session, image_bgr, decoder_session, ...): SegmentationResult
+    -_encoder_blob(image_bgr, image_size): tuple
+    -_named_output(session, outputs, preferred_names): ndarray
     -_bbox_from_mask(mask): tuple | None
-    -_nms(instances, threshold): list
+    -_box_iou(box, boxes): ndarray
+    -_nms(candidates, iou_threshold): list
   }
 
   class "main" as runner <<module>> {
+    +FAMILY_RUNNERS: dict
+    +DEFAULT_REGISTRY: Path
     +load_registries(paths): dict
     +load_dataset_registries(paths): dict
-    +create_model_runner(name, models, providers): Callable
-    +run_model(name, image_bgr, models, providers): SegmentationResult
-    +evaluate_dataset(model_name, models, dataset_config, metrics): dict
+    +create_model_runner(name, models, providers, runtime_options): Callable
+    +run_model(name, image_bgr, models, providers, runtime_options): SegmentationResult
+    +evaluate_dataset(model_name, models, dataset_config, metrics, runtime_options, visualization_dir, visualization_limit): dict
     +parse_args(argv): Namespace
+    +sam_runtime_options(args, family): dict
     +main(argv): void
   }
 }
@@ -123,6 +137,8 @@ annotations ..> GTInstance : creates
 metrics ..> GTSample : evaluates
 metrics ..> GTInstance : matches
 metrics ..> Prediction : consumes
+visualization ..> SegmentationInstance : renders
+visualization ..> SegmentationResult : renders
 
 yolo ..> common : preprocesses / masks
 maskrcnn ..> common : creates results
@@ -137,6 +153,7 @@ runner ..> yolo : dispatches
 runner ..> maskrcnn : dispatches
 runner ..> sam : dispatches
 runner ..> Prediction : converts inference output
+runner ..> visualization : optionally saves previews
 
 note right of runner
   FAMILY_RUNNERS maps model families to adapters.

@@ -1,5 +1,5 @@
-yolov8n-seg-ort:
-  path: /mnt/c/models/yolov8segn_ortp.onnx
+yolov8l-seg-ort:
+  path: /mnt/c/models/yolov8segn_orto.onnx
   family: yolo_seg
   input_size: [640, 640]
 
@@ -20,3 +20,21 @@ sam-vit-b:
     points_per_side: 16
     pred_iou_thres: 0.75
     min_mask_area: 20
+
+yolov8l-seg-ort-t:
+  path: /mnt/c/models/yolov8_models/yolov8_orig_tiles/yolov8segORIGT.onnx
+  family: yolo_seg
+  input_size: [640, 640]
+
+yolov8l-seg-angl-t:
+  path: /mnt/c/models/yolov8_models/yolov8_angl_tiles/yolov8segANGLT.onnx
+  family: yolo_seg
+  input_size: [640, 640]
+
+maskrcnn-t:
+  path: /mnt/c/models/maskrcnnT.onnx
+  family: maskrcnn 
+
+maskrcnn45:
+  path: /mnt/c/models/maskrcnn45.onnx
+  family: maskrcnn

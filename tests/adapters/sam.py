@@ -1,10 +1,3 @@
-"""ONNX adapter for the original Segment Anything Model (SAM).
-
-The official ONNX export is split into an image encoder and a mask decoder.
-This adapter runs the encoder once and uses a grid of positive point prompts to
-turn promptable SAM into the instance-like output expected by the evaluator.
-"""
-
 from __future__ import annotations
 
 import cv2
@@ -82,11 +75,6 @@ def run_sam(
     nms_iou_thres=0.7,
     points=None,
 ):
-    """Run split SAM ONNX models and return class-agnostic instances.
-
-    ``points`` may contain explicit ``[x, y]`` image coordinates. When omitted,
-    an evenly spaced grid is used for automatic mask generation.
-    """
     if decoder_session is None:
         raise ValueError("SAM requires a decoder_session")
     orig_h, orig_w = image_bgr.shape[:2]
@@ -149,7 +137,7 @@ def run_sam(
             candidates.append((score, box, binary))
 
     instances = [
-        SegmentationInstance(mask=mask, bbox=tuple(box), score=score, class_id=1, id=index)
+        SegmentationInstance(mask=mask, bbox=tuple(box), score=score, class_id=0, id=index)
         for index, (score, box, mask) in enumerate(_nms(candidates, nms_iou_thres))
     ]
     return SegmentationResult(instances, (orig_h, orig_w), "sam")

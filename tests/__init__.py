@@ -1,1 +1,1 @@
-"""ONNX model test-suite package."""
+"""ONNX model test-suite"""

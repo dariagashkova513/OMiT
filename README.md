@@ -65,6 +65,22 @@ For a quick inference without ground truth:
 python -m tests.main --model yolov8l-seg-angl --image data/example.jpg
 ```
 
+Save masks, bounding boxes, class labels, and confidence scores over the image:
+
+```bash
+python -m tests.main --model yolov8l-seg-angl --image data/example.jpg \
+  --visualize results/example-predictions.jpg
+```
+
+For dataset evaluation, `--visualize` is a directory. The first two samples are
+saved by default; change that with `--visualize-limit`:
+
+```bash
+python -m tests.main --model yolov8l-seg-angl --dataset bricks-yolo \
+  --dataset-registry dataset_registry.yaml --visualize results/previews \
+  --visualize-limit 2
+```
+
 Run SAM with its automatic prompt grid:
 
 ```bash

@@ -23,14 +23,62 @@ fokus-bilder-coco:
   images: /mnt/c/onnx_model_test_suite/tiles_set
   annotations: /mnt/c/onnx_model_test_suite/tiles_set/result.json
 
+bricks-rotated-45-coco:
+  format: coco
+  images: /mnt/c/bachelors/dataset_rotated45_coco/test
+  annotations: /mnt/c/bachelors/dataset_rotated45_coco/test/annotations.json
+
+bricks-rotated-45-yolo:
+  format: yolo_seg
+  images: /mnt/c/bachelors/dataset_rotated45_yolo/test/images
+  labels: /mnt/c/bachelors/dataset_rotated45_yolo/test/labels
+  class_names: [brick]
+  image_ext: .jpg
+
 bricks-rotated-15-coco:
   format: coco
-  images: /mnt/c/bachelors/dataset_rotated15_coco/test 
-  annotations: /mnt/c/bachelors/dataset_rotated15_coco/test/annotations.coco
+  images: /mnt/c/bachelors/dataset_rotated15_coco/test
+  annotations: /mnt/c/bachelors/dataset_rotated15_coco/test/annotations.json
 
 bricks-rotated-15-yolo:
   format: yolo_seg
   images: /mnt/c/bachelors/dataset_rotated15_yolo/test/images
-  annotations: /mnt/c/bachelors/dataset_rotated15_coco/test/labels
+  labels: /mnt/c/bachelors/dataset_rotated15_yolo/test/labels
+  class_names: [brick]
+  image_ext: .jpg
 
-  
+bricks-rotated-135-coco:
+  format: coco
+  images: /mnt/c/bachelors/dataset_rotated135_coco/test
+  annotations: /mnt/c/bachelors/dataset_rotated135_coco/test/annotations.json
+
+bricks-rotated-135-yolo:
+  format: yolo_seg
+  images: /mnt/c/bachelors/dataset_rotated135_yolo/test/images
+  labels: /mnt/c/bachelors/dataset_rotated135_yolo/test/labels
+  class_names: [brick]
+  image_ext: .jpg
+
+bricks-rotated-150-coco:
+  format: coco
+  images: /mnt/c/bachelors/dataset_rotated150_coco/test
+  annotations: /mnt/c/bachelors/dataset_rotated150_coco/test/annotations.json
+
+bricks-rotated-150-yolo:
+  format: yolo_seg
+  images: /mnt/c/bachelors/dataset_rotated150_yolo/test/images
+  labels: /mnt/c/bachelors/dataset_rotated150_yolo/test/labels
+  class_names: [brick]
+  image_ext: .jpg
+
+tiles-fokus-yolo:
+  format: yolo_seg
+  images: /mnt/c/bachelors/fliessenDSYOLO/images
+  labels: /mnt/c/bachelors/fliessenDSYOLO/labels
+  class_names: [Tile]
+  image_ext: .png
+
+tiles-fokus-coco:
+  format: coco
+  images: /mnt/c/bachelors/fliessenDSCOCO/images
+  annotations: /mnt/c/bachelors/fliessenDSCOCO/result.json
