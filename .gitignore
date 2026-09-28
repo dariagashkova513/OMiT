@@ -3,3 +3,6 @@
 /results
 /.ipynb_checkpoints
 /data
+/tests/__pycache__
+/seg_eval/__pycache__
+/adapters/__pycache__
